@@ -1,0 +1,14 @@
+import "tfplan/v2" as tfplan
+
+# Check all resources in the plan
+buckets = filter tfplan.resources as _, r {
+    r.type is "google_storage_bucket"
+}
+
+# Ensure no bucket is public
+all b in buckets as _, b {
+    all b.applied.iam_policy.bindings as _, binding {
+        binding.role != "roles/storage.objectViewer" or
+        all binding.members as _, member { !member.matches("allUsers") }
+    }
+}
